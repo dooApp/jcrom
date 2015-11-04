@@ -17,100 +17,13 @@
  */
 package org.jcrom.modeshape;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
-
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
-import javax.jcr.PropertyType;
-import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.nodetype.NodeType;
-
 import junit.framework.Assert;
-
 import org.jcrom.JcrDataProviderImpl;
 import org.jcrom.JcrFile;
 import org.jcrom.JcrMappingException;
 import org.jcrom.Jcrom;
-import org.jcrom.dao.ChildDAO;
-import org.jcrom.dao.ChildDAO2;
-import org.jcrom.dao.ChildDAO3;
-import org.jcrom.dao.ChildDAO4;
-import org.jcrom.dao.CustomJCRFileDAO;
-import org.jcrom.dao.EntityWithMapChildrenDAO;
-import org.jcrom.dao.ParentDAO2;
-import org.jcrom.dao.ParentDAO3;
-import org.jcrom.dao.ParentDAO4;
-import org.jcrom.entities.A;
-import org.jcrom.entities.AImpl;
-import org.jcrom.entities.Address;
-import org.jcrom.entities.B;
-import org.jcrom.entities.BImpl;
-import org.jcrom.entities.BadNode;
-import org.jcrom.entities.C;
-import org.jcrom.entities.CImpl;
-import org.jcrom.entities.Child;
-import org.jcrom.entities.Child2;
-import org.jcrom.entities.Child3;
-import org.jcrom.entities.Child4;
-import org.jcrom.entities.Circle;
-import org.jcrom.entities.CustomJCRFile;
-import org.jcrom.entities.CustomJCRFileParentNode;
-import org.jcrom.entities.Document;
-import org.jcrom.entities.EntityChild;
-import org.jcrom.entities.EntityModifiedMapFieldAdded;
-import org.jcrom.entities.EntityParent;
-import org.jcrom.entities.EntityToBeModified;
-import org.jcrom.entities.EntityWithBigDecimalSerialization;
-import org.jcrom.entities.EntityWithMapChildren;
-import org.jcrom.entities.EntityWithSerializedProperties;
-import org.jcrom.entities.EnumEntity;
-import org.jcrom.entities.FinalEntity;
-import org.jcrom.entities.First;
-import org.jcrom.entities.GrandChild;
-import org.jcrom.entities.GrandParent;
-import org.jcrom.entities.Parent;
-import org.jcrom.entities.Parent2;
-import org.jcrom.entities.Parent3;
-import org.jcrom.entities.Parent4;
-import org.jcrom.entities.Person;
-import org.jcrom.entities.Photo;
-import org.jcrom.entities.ProtectedPropertyNode;
-import org.jcrom.entities.Rectangle;
-import org.jcrom.entities.ReferenceContainer;
-import org.jcrom.entities.ReferencedEntity;
-import org.jcrom.entities.Second;
-import org.jcrom.entities.Shape;
-import org.jcrom.entities.ShapeParent;
-import org.jcrom.entities.Square;
-import org.jcrom.entities.Triangle;
-import org.jcrom.entities.UserProfile;
-import org.jcrom.entities.WithParentInterface;
+import org.jcrom.dao.*;
+import org.jcrom.entities.*;
 import org.jcrom.invalidobject.InvalidEntity;
 import org.jcrom.util.JcrUtils;
 import org.jcrom.util.NodeFilter;
@@ -118,6 +31,13 @@ import org.jcrom.util.PathUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.test.ModeShapeSingleUseTest;
+
+import javax.jcr.*;
+import javax.jcr.nodetype.NodeType;
+import java.io.*;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 /**
  *
@@ -1716,6 +1636,17 @@ public class TestMapping extends ModeShapeSingleUseTest {
         assertNotNull(updateParentFromNode.getAdoptedChild());
         assertEquals(parent.getAdoptedChild().getTitle(), updateParentFromNode.getAdoptedChild().getTitle());
         assertEquals(parent.getChildren().size(), updateParentFromNode.getChildren().size());
+
+        // TestCase for #121
+        // add an adopted grand child to nico and update the node
+        parent = jcrom.fromNode(Parent.class, updateNode);
+        parent.getChildren().get(parent.getChildren().size() - 1).setAdoptedGrandChild(createGrandChild("Adopted by Nico"));
+
+        // check if the adopted grand child is has been correctly mapped
+        updateNode = jcrom.updateNode(updateNode, parent, nodeFilter);
+        updateParentFromNode = jcrom.fromNode(Parent.class, updateNode);
+        assertNotNull(updateParentFromNode.getChildren().get(parent.getChildren().size() - 1).getAdoptedGrandChild());
+
 
         parent = jcrom.fromNode(Parent.class, updateNode);
         parent.setTitle("title updated");
