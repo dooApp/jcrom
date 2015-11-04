@@ -17,11 +17,10 @@
  */
 package org.jcrom.util;
 
+import javax.jcr.Node;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.jcr.Node;
 
 /**
  *
@@ -46,7 +45,7 @@ public class NodeFilter implements Serializable {
     private final List<String> nodeNameStack = new ArrayList<String>();
 
     /**
-     * 
+     *
      * @param fieldNameFilter comma separated list of names of child nodes / references to load 
      * ("*" loads all, while "none" loads none, and a prefix of "-" excludes the named nodes)
      * @param maxDepth the maximum depth of loaded child nodes (0 means no child nodes are loaded,
@@ -75,9 +74,9 @@ public class NodeFilter implements Serializable {
 
     public boolean isIncluded(String name, int depth) {
         // return isDepthIncluded(depth) && isNameIncluded(name);
-        boolean isIncluded = isDepthIncluded(depth) && isNameIncluded(name);
+        boolean isIncluded = isFilterDepthIncluded(depth) || isDepthIncluded(depth) && isNameIncluded(name);
         if (isIncluded) {
-            int size = nodeNameStack.size();
+           int size = nodeNameStack.size();
             if (depth < size) {
                 List<String> tmp = new ArrayList<String>();
                 for (int i = 0; i < depth; i++) {
@@ -120,8 +119,12 @@ public class NodeFilter implements Serializable {
         return isIncluded;
     }
 
+    public boolean isFilterDepthIncluded(int depth) {
+        return filterDepth > DEPTH_INFINITE && depth >= filterDepth;
+    }
+
     public boolean isDepthIncluded(int depth) {
-        if (filterDepth > DEPTH_INFINITE && depth > filterDepth) {
+        if (isFilterDepthIncluded(depth)) {
             return true;
         } else {
             return maxDepth == DEPTH_INFINITE || depth < maxDepth;
