@@ -17,27 +17,20 @@
  */
 package org.jcrom;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.jcr.NamespaceRegistry;
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
-
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrReference;
 import org.jcrom.type.TypeHandler;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.PathUtils;
 import org.jcrom.util.ReflectionUtils;
+
+import javax.jcr.*;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class handles mappings of type @JcrReference
@@ -194,12 +187,12 @@ class ReferenceMapper {
         }
     }
 
-    private void setReferenceProperties(Field field, Object obj, Node node, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException {
+    private void setReferenceProperties(Field field, Object obj, Node node, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException {
 
         String propertyName = getPropertyName(field);
 
         // make sure that the reference should be updated
-        if (nodeFilter == null || nodeFilter.isNameIncluded(field.getName())) {
+        if (nodeFilter == null || nodeFilter.isIncluded(field.getName(), depth)) {
             if (typeHandler.isList(field.getType())) {
                 // multiple references in a List
                 addMultipleReferencesToNode(field, obj, propertyName, node);
@@ -214,11 +207,11 @@ class ReferenceMapper {
     }
 
     void addReferences(Field field, Object obj, Node node) throws IllegalAccessException, RepositoryException {
-        setReferenceProperties(field, obj, node, null);
+        setReferenceProperties(field, obj, node, -1, null);
     }
 
-    void updateReferences(Field field, Object obj, Node node, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException {
-        setReferenceProperties(field, obj, node, nodeFilter);
+    void updateReferences(Field field, Object obj, Node node, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException {
+        setReferenceProperties(field, obj, node, depth, nodeFilter);
     }
 
     private Node getSingleReferencedNode(JcrReference jcrReference, Value value, Session session) throws RepositoryException {

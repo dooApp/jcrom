@@ -17,19 +17,15 @@
  */
 package org.jcrom;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import net.sf.cglib.proxy.LazyLoader;
+import org.jcrom.annotations.*;
+import org.jcrom.callback.DefaultJcromCallback;
+import org.jcrom.callback.JcromCallback;
+import org.jcrom.type.TypeHandler;
+import org.jcrom.util.JcrUtils;
+import org.jcrom.util.NodeFilter;
+import org.jcrom.util.PathUtils;
+import org.jcrom.util.ReflectionUtils;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -38,34 +34,12 @@ import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionManager;
-
-import net.sf.cglib.proxy.LazyLoader;
-
-import org.jcrom.annotations.JcrBaseVersionCreated;
-import org.jcrom.annotations.JcrBaseVersionName;
-import org.jcrom.annotations.JcrCheckedout;
-import org.jcrom.annotations.JcrChildNode;
-import org.jcrom.annotations.JcrCreated;
-import org.jcrom.annotations.JcrFileNode;
-import org.jcrom.annotations.JcrIdentifier;
-import org.jcrom.annotations.JcrName;
-import org.jcrom.annotations.JcrNode;
-import org.jcrom.annotations.JcrParentNode;
-import org.jcrom.annotations.JcrPath;
-import org.jcrom.annotations.JcrProperty;
-import org.jcrom.annotations.JcrProtectedProperty;
-import org.jcrom.annotations.JcrReference;
-import org.jcrom.annotations.JcrSerializedProperty;
-import org.jcrom.annotations.JcrUUID;
-import org.jcrom.annotations.JcrVersionCreated;
-import org.jcrom.annotations.JcrVersionName;
-import org.jcrom.callback.DefaultJcromCallback;
-import org.jcrom.callback.JcromCallback;
-import org.jcrom.type.TypeHandler;
-import org.jcrom.util.JcrUtils;
-import org.jcrom.util.NodeFilter;
-import org.jcrom.util.PathUtils;
-import org.jcrom.util.ReflectionUtils;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.sql.Timestamp;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * This class handles the heavy lifting of mapping a JCR node to a JCR entity object, and vice versa.
@@ -606,7 +580,7 @@ class Mapper {
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrReference.class)) {
                 // references
-                referenceMapper.updateReferences(field, entity, node, nodeFilter);
+                referenceMapper.updateReferences(field, entity, node, depth, nodeFilter);
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrFileNode.class) && nodeFilter.isDepthIncluded(depth)) {
                 // file nodes
